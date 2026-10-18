@@ -25,9 +25,11 @@ top of `app.js`, with these fields:
 | `textMeAboutNewEvents` | `yes` / `no` |
 | `version` | `fade` / `signs` |
 
-Until `RSVP_ENDPOINT` is set, the popup says "RSVPs aren't open yet" instead of pretending to
-save. Nothing sends the address automatically: the popup tells guests it will be texted to them,
-so text it to the list yourself before the night.
+With `RSVP_ENDPOINT` empty (as shipped), the popup is a **demo walkthrough**: a line at its top
+says nothing is sent or saved, it runs through to the end, and its last step says nothing was
+sent. Set an endpoint and the demo line goes away and RSVPs are sent. Nothing sends the address
+automatically: with an endpoint set, the popup tells guests it will be texted to them, so text it
+to the list yourself before the night.
 
 ### Option A: a Google Sheet (free)
 

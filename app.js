@@ -13,9 +13,11 @@
 /*
  * Where each RSVP is sent: a URL that accepts a form POST. Works as is with a Formspree form
  * (https://formspree.io/f/<id>) or a Google Apps Script web app that appends to a Sheet (see the
- * README). Until it is set, the sheet says RSVPs aren't open yet instead of pretending to save.
+ * README). Left empty, the popup is a demo walkthrough: it says so at the top, runs to the end,
+ * and sends and saves nothing.
  */
 const RSVP_ENDPOINT = '';
+const DEMO = !RSVP_ENDPOINT;
 
 const A = 'assets';
 const PORTRAIT = '(max-aspect-ratio: 1/1)';
@@ -220,6 +222,8 @@ const first = document.getElementById('first');
 const last = document.getElementById('last');
 const email = document.getElementById('email');
 const submit = document.getElementById('submit');
+const doneLine = document.getElementById('done-line');
+document.getElementById('demo-note').hidden = !DEMO;
 
 function show(step, focus) {
   for (const s of [stepPhone, stepDetails, stepDone]) s.hidden = s !== step;
@@ -286,8 +290,15 @@ stepDetails.addEventListener('submit', async event => {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())) {
     return fail('details-error', email, 'Add an email address, like you@example.com.');
   }
-  if (!RSVP_ENDPOINT) {
-    return fail('details-error', null, "RSVPs aren't open yet. Please check back soon.");
+  const finish = line => {
+    doneLine.textContent = line;
+    stepPhone.reset();
+    stepDetails.reset();
+    show(stepDone, document.getElementById('done'));
+  };
+  if (DEMO) {
+    finish('This was the demo walkthrough: nothing was sent or saved.');
+    return;
   }
 
   submit.disabled = true;
@@ -310,11 +321,7 @@ stepDetails.addEventListener('submit', async event => {
       headers: { Accept: 'application/json' },
     });
     if (!response.ok) throw new Error(String(response.status));
-    document.getElementById('done-line').textContent =
-      `We'll text the address to ${country.value} ${phone.value.trim().replace(/^0+/, '')} before the night.`;
-    stepPhone.reset();
-    stepDetails.reset();
-    show(stepDone, document.getElementById('done'));
+    finish(`We'll text the address to ${country.value} ${phone.value.trim().replace(/^0+/, '')} before the night.`);
   } catch {
     fail('details-error', null, "Your RSVP didn't go through. Check your connection and try again.");
   } finally {
