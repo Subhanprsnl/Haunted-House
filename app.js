@@ -1,8 +1,8 @@
 /*
  * Darren Dzienciol's Haunted Hotel: plays the animated flyer.
  *
- * Two cuts: `signs` (the default: the hotel with its signs dark, lighting up one by one) and
- * `fade` (add `?cut=fade`: the night comes up out of the dark, then the signs fade in).
+ * Two cuts: `fade` (the default: the night comes up out of the dark, then the signs fade in) and
+ * `signs` (add `?cut=signs`: the hotel with its signs dark, lighting up one by one).
  * Each is an intro, played once, and a loop that waits primed under it and takes over when the
  * intro ends, repeating with the video element's own `loop` (no seek, so no hitch in Safari).
  * Each film is HEVC, then AV1, then H.264: the browser plays the first it can.
@@ -60,7 +60,7 @@ const FILMS = {
   },
 };
 
-const cut = new URLSearchParams(location.search).get('cut') === 'fade' ? 'fade' : 'signs';
+const cut = new URLSearchParams(location.search).get('cut') === 'signs' ? 'signs' : 'fade';
 document.body.dataset.cut = cut;
 
 const stage = document.getElementById('stage');
@@ -69,7 +69,8 @@ const platePhone = document.getElementById('plate-phone');
 const cta = document.getElementById('cta');
 const rsvp = document.getElementById('rsvp');
 rsvp.href = RSVP_URL;
-if (cut === 'fade') showPlates('poster');
+// The HTML paints the fade cut's first frame; the signs cut has its own.
+if (cut === 'signs') showPlates('poster');
 
 const portrait = matchMedia(PORTRAIT);
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');

@@ -7,8 +7,8 @@ A static, single-page animated flyer: no build step, no dependencies.
   H.264), its posters and stills, the blurred fill behind it, and the RSVP sign's font
   (Young Serif, SIL Open Font License).
 
-Two cuts: the default lights the signs one by one; add `?cut=fade` for the one where the night
-fades in first and then the signs.
+Two cuts: the default fades the night in out of the dark and then the signs; add `?cut=signs`
+for the one that opens on the hotel and lights its signs one by one.
 
 ## Before you deploy
 
