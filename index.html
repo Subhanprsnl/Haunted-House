@@ -31,8 +31,72 @@
   </div>
 
   <div class="cta" id="cta" inert>
-    <a class="rsvp" id="rsvp" href="#">RSVP</a>
+    <button class="rsvp" id="rsvp" type="button" aria-haspopup="dialog">RSVP</button>
   </div>
+
+  <!-- The RSVP: phone, then a few details, then done. Sent to RSVP_ENDPOINT in app.js. -->
+  <dialog class="sheet" id="sheet" aria-labelledby="sheet-title">
+    <button class="close" id="close" type="button" aria-label="Close">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+
+    <form class="step" id="step-phone" novalidate>
+      <h2 class="title" id="sheet-title">Your phone number</h2>
+      <p class="lede">Enter your mobile number to continue.</p>
+      <div class="phone-row">
+        <label class="sr-only" for="country">Country code</label>
+        <select class="country" id="country" name="country" autocomplete="tel-country-code">
+          <option value="+1" data-code="US" selected>US +1</option>
+          <option value="+1" data-code="CA">CA +1</option>
+          <option value="+44" data-code="GB">GB +44</option>
+          <option value="+52" data-code="MX">MX +52</option>
+          <option value="+33" data-code="FR">FR +33</option>
+          <option value="+49" data-code="DE">DE +49</option>
+          <option value="+34" data-code="ES">ES +34</option>
+          <option value="+39" data-code="IT">IT +39</option>
+          <option value="+61" data-code="AU">AU +61</option>
+          <option value="+971" data-code="AE">AE +971</option>
+          <option value="+91" data-code="IN">IN +91</option>
+          <option value="+92" data-code="PK">PK +92</option>
+        </select>
+        <label class="sr-only" for="phone">Mobile number</label>
+        <input class="field phone" id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="202 555 0123" required>
+      </div>
+      <label class="check">
+        <input type="checkbox" id="optin" name="optin">
+        <span>Text me when new events drop.</span>
+      </label>
+      <p class="error" id="phone-error" role="alert"></p>
+      <button class="primary" type="submit">Continue</button>
+      <p class="legal">
+        By continuing, you agree to be contacted by text about this event. Ticking the box is optional:
+        it also opts you in to occasional texts about future events. Msg &amp; data rates may apply.
+        Reply STOP to opt out.
+      </p>
+    </form>
+
+    <form class="step" id="step-details" novalidate hidden>
+      <h2 class="title">A few details</h2>
+      <p class="lede">So we know who's on the list.</p>
+      <div class="pair">
+        <label class="label">First name<input class="field" id="first" name="first" autocomplete="given-name" required></label>
+        <label class="label">Last name<input class="field" id="last" name="last" autocomplete="family-name" required></label>
+      </div>
+      <label class="label">Email<input class="field" id="email" name="email" type="email" inputmode="email" autocomplete="email" required></label>
+      <p class="error" id="details-error" role="alert"></p>
+      <div class="actions">
+        <button class="primary" id="submit" type="submit">RSVP</button>
+        <button class="quiet" id="back" type="button">Back</button>
+      </div>
+    </form>
+
+    <div class="step" id="step-done" hidden>
+      <h2 class="title">You're on the list</h2>
+      <p class="lede" id="done-line">We'll text you the address before the night.</p>
+      <p class="lede">October 31st, 9 PM.</p>
+      <button class="primary" id="done" type="button">Close</button>
+    </div>
+  </dialog>
 
   <script src="app.js"></script>
 </body>

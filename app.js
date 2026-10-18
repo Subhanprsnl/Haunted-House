@@ -10,8 +10,12 @@
  * the finished invitation as a still and the RSVP at once.
  */
 
-// Where the RSVP sign sends guests: the event's official RSVP page.
-const RSVP_URL = '#';
+/*
+ * Where each RSVP is sent: a URL that accepts a form POST. Works as is with a Formspree form
+ * (https://formspree.io/f/<id>) or a Google Apps Script web app that appends to a Sheet (see the
+ * README). Until it is set, the sheet says RSVPs aren't open yet instead of pretending to save.
+ */
+const RSVP_ENDPOINT = '';
 
 const A = 'assets';
 const PORTRAIT = '(max-aspect-ratio: 1/1)';
@@ -68,7 +72,6 @@ const plate = document.getElementById('plate');
 const platePhone = document.getElementById('plate-phone');
 const cta = document.getElementById('cta');
 const rsvp = document.getElementById('rsvp');
-rsvp.href = RSVP_URL;
 // The HTML paints the fade cut's first frame; the signs cut has its own.
 if (cut === 'signs') showPlates('poster');
 
@@ -77,6 +80,8 @@ const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 
 let still = false;
 let teardown = () => {};
+/** The video on screen now (the intro, then the loop), so the open sheet can pause it. */
+let onScreen = () => null;
 
 function reveal() {
   cta.dataset.show = 'true';
@@ -182,10 +187,12 @@ function play() {
     if (stuck || running >= loopAt * 1000 + STALL_MS) giveUp();
   }, 500);
 
-  // A hidden tab pauses the film; it picks up where it was.
+  onScreen = () => (stage.dataset.looping ? next : first);
+
+  // A hidden tab (or the open RSVP sheet) pauses the film; it picks up where it was.
   const onVisibility = () => {
-    const active = stage.dataset.looping ? next : first;
-    if (document.hidden) active.pause();
+    const active = onScreen();
+    if (document.hidden || sheet.open) active.pause();
     else if (!active.ended) active.play().catch(() => {});
   };
   document.addEventListener('visibilitychange', onVisibility);
@@ -195,9 +202,126 @@ function play() {
     document.removeEventListener('visibilitychange', onVisibility);
     first.remove();
     next.remove();
+    onScreen = () => null;
     teardown = () => {};
   };
 }
+
+/* ---------------- The RSVP sheet ---------------- */
+
+const sheet = document.getElementById('sheet');
+const stepPhone = document.getElementById('step-phone');
+const stepDetails = document.getElementById('step-details');
+const stepDone = document.getElementById('step-done');
+const country = document.getElementById('country');
+const phone = document.getElementById('phone');
+const optin = document.getElementById('optin');
+const first = document.getElementById('first');
+const last = document.getElementById('last');
+const email = document.getElementById('email');
+const submit = document.getElementById('submit');
+
+function show(step, focus) {
+  for (const s of [stepPhone, stepDetails, stepDone]) s.hidden = s !== step;
+  focus?.focus();
+}
+
+function fail(errorId, field, message) {
+  document.getElementById(errorId).textContent = message;
+  if (field) {
+    field.setAttribute('aria-invalid', 'true');
+    field.focus();
+  }
+}
+
+function clearErrors(form) {
+  for (const f of form.querySelectorAll('[aria-invalid]')) f.removeAttribute('aria-invalid');
+  for (const e of form.querySelectorAll('.error')) e.textContent = '';
+}
+
+/** The number in international form: the country's code and the digits typed. */
+function fullNumber() {
+  const digits = phone.value.replace(/\D/g, '').replace(/^0+/, '');
+  return `${country.value}${digits}`;
+}
+
+rsvp.addEventListener('click', () => {
+  if (stepDone.hidden === false) show(stepPhone);
+  sheet.showModal();
+  onScreen()?.pause();
+  (stepPhone.hidden ? first : phone).focus();
+});
+
+const closeSheet = () => sheet.close();
+document.getElementById('close').addEventListener('click', closeSheet);
+document.getElementById('done').addEventListener('click', closeSheet);
+// A click on the dimmed page around the sheet closes it too.
+sheet.addEventListener('click', event => {
+  if (event.target === sheet) closeSheet();
+});
+sheet.addEventListener('close', () => {
+  const active = onScreen();
+  if (active && !document.hidden && !active.ended) active.play().catch(() => {});
+  rsvp.focus();
+});
+
+stepPhone.addEventListener('submit', event => {
+  event.preventDefault();
+  clearErrors(stepPhone);
+  const digits = phone.value.replace(/\D/g, '');
+  if (digits.length < 7 || digits.length > 15) {
+    fail('phone-error', phone, 'Enter your mobile number, like 202 555 0123.');
+    return;
+  }
+  show(stepDetails, first);
+});
+
+document.getElementById('back').addEventListener('click', () => show(stepPhone, phone));
+
+stepDetails.addEventListener('submit', async event => {
+  event.preventDefault();
+  clearErrors(stepDetails);
+  if (!first.value.trim()) return fail('details-error', first, 'Add your first name.');
+  if (!last.value.trim()) return fail('details-error', last, 'Add your last name.');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())) {
+    return fail('details-error', email, 'Add an email address, like you@example.com.');
+  }
+  if (!RSVP_ENDPOINT) {
+    return fail('details-error', null, "RSVPs aren't open yet. Please check back soon.");
+  }
+
+  submit.disabled = true;
+  submit.textContent = 'Sending…';
+  // Form-encoded, a "simple" request: no CORS preflight, so Formspree and Apps Script both take it.
+  const body = new URLSearchParams({
+    phone: fullNumber(),
+    country: country.selectedOptions[0].dataset.code,
+    textMeAboutNewEvents: optin.checked ? 'yes' : 'no',
+    firstName: first.value.trim(),
+    lastName: last.value.trim(),
+    email: email.value.trim(),
+    version: cut,
+    submittedAt: new Date().toISOString(),
+  });
+  try {
+    const response = await fetch(RSVP_ENDPOINT, {
+      method: 'POST',
+      body,
+      headers: { Accept: 'application/json' },
+    });
+    if (!response.ok) throw new Error(String(response.status));
+    document.getElementById('done-line').textContent =
+      `We'll text the address to ${country.value} ${phone.value.trim().replace(/^0+/, '')} before the night.`;
+    stepPhone.reset();
+    stepDetails.reset();
+    show(stepDone, document.getElementById('done'));
+  } catch {
+    fail('details-error', null, "Your RSVP didn't go through. Check your connection and try again.");
+  } finally {
+    submit.disabled = false;
+    submit.textContent = 'RSVP';
+  }
+});
 
 if (reduced.matches) {
   giveUp();

@@ -259,6 +259,292 @@ body[data-cut="fade"]::before {
   outline-offset: 4px;
 }
 
+button.rsvp {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+/* ---------- The RSVP sheet: blood-dark, an old-rose edge, a serif title, a blood button ---------- */
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.sheet {
+  --sheet: #12070a;
+  --bone: #f3e6ce;
+  --muted: #c2ae96;
+  --edge: #8b5255;
+  --blood: #a3121d;
+  --blood-hi: #c11a27;
+  --error: #ff8f80;
+  width: 100%;
+  max-width: min(460px, calc(100vw - 28px));
+  max-height: calc(100dvh - 28px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  padding: 0;
+  border: 1px solid var(--edge);
+  border-radius: 4px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: radial-gradient(ellipse at top, #3b0d18, var(--sheet) 75%) var(--sheet);
+  color: var(--bone);
+  box-shadow: 0 24px 100px #000a;
+}
+
+.sheet[open] {
+  animation: sheet-in 0.3s cubic-bezier(0.2, 0.9, 0.25, 1);
+}
+
+.sheet::backdrop {
+  background: rgb(6 2 3 / 79%);
+  -webkit-backdrop-filter: blur(9px);
+  backdrop-filter: blur(9px);
+}
+
+.close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .close:hover {
+    background: rgb(255 255 255 / 7%);
+    color: var(--bone);
+  }
+}
+
+.step {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 26px 24px 22px;
+}
+
+.step[hidden] {
+  display: none;
+}
+
+.title {
+  margin: 0;
+  padding-right: 36px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 26px;
+  font-weight: 400;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+.lede {
+  margin: -6px 0 0;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.phone-row {
+  display: flex;
+  min-height: 48px;
+  border: 1px solid rgb(188 136 133 / 45%);
+  border-radius: 2px;
+  background: rgb(7 2 5 / 55%);
+}
+
+.phone-row:focus-within {
+  border-color: #d39a96;
+}
+
+.country {
+  flex: none;
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 92px;
+  padding: 0 28px 0 14px;
+  border: 0;
+  border-right: 1px solid rgb(188 136 133 / 45%);
+  background:
+    linear-gradient(45deg, transparent 50%, var(--muted) 50%) right 16px center / 5px 5px no-repeat,
+    linear-gradient(-45deg, transparent 50%, var(--muted) 50%) right 11px center / 5px 5px no-repeat,
+    transparent;
+  color: var(--bone);
+  font-family: inherit;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.country option {
+  background: #1b0a0f;
+  color: var(--bone);
+}
+
+.field {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid rgb(188 136 133 / 45%);
+  border-radius: 2px;
+  background: rgb(7 2 5 / 55%);
+  color: var(--bone);
+  font: inherit;
+  font-size: 16px;
+}
+
+.field::placeholder {
+  color: rgb(194 174 150 / 55%);
+}
+
+.field:focus {
+  border-color: #d39a96;
+  outline: none;
+}
+
+.phone-row .field {
+  min-width: 0;
+  border: 0;
+  background: transparent;
+}
+
+.field[aria-invalid="true"],
+.phone-row:has([aria-invalid="true"]) {
+  border-color: var(--error);
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  color: var(--bone);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.check input {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  accent-color: var(--blood);
+}
+
+.label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 380px) {
+  .pair {
+    grid-template-columns: 1fr;
+  }
+}
+
+.error {
+  margin: -4px 0 0;
+  color: var(--error);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.error:empty {
+  display: none;
+}
+
+.primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 52px;
+  border: 1px solid #bd6670;
+  border-radius: 2px;
+  background: var(--blood);
+  color: var(--bone);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 0.15s ease, scale 0.15s ease-out, opacity 0.15s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .primary:hover {
+    background: var(--blood-hi);
+  }
+}
+
+.primary:active {
+  scale: 0.96;
+}
+
+.primary:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+
+.actions {
+  display: grid;
+  gap: 8px;
+}
+
+.quiet {
+  min-height: 48px;
+  border: 0;
+  background: transparent;
+  color: var(--bone);
+  font: inherit;
+  font-size: 15px;
+  text-decoration: underline;
+  text-underline-offset: 0.3em;
+  cursor: pointer;
+}
+
+.legal {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.sheet :focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+  .step {
+    padding: 22px 18px 20px;
+  }
+}
+
 /* Reduced motion: the finished invitation as a still, and every move is a cut. */
 @media (prefers-reduced-motion: reduce) {
   *,
