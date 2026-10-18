@@ -1,0 +1,271 @@
+/*
+ * Darren Dzienciol's Haunted Hotel: the animated flyer over the whole screen, the RSVP as one of
+ * the flyer's own signs. Wide screens get the 1920x1080 film, portrait screens the 1080x2336 one.
+ */
+
+@font-face {
+  font-family: "Haunted Young Serif";
+  src: url("assets/young-serif-latin.a46a84bfaa83.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --night: #0b0d11;
+  --ember: #ffc58a;
+  /*
+   * The stage covers the screen like `object-fit: cover`, but never so far that the flyer's
+   * lettering is cut (it sits 5-95% across, 8-92% down the wide film; 4-96% across, 19-81% down
+   * the tall one). Whatever it leaves uncovered shows a blurred copy of the first frame.
+   */
+  --ratio: calc(1080 / 1920);
+  --w: min(max(100vw, 177.78dvh), 111vw, 210dvh);
+  --rsvp-size: clamp(22px, 3.6dvh, 42px);
+  color-scheme: dark;
+}
+
+@media (max-aspect-ratio: 1/1) {
+  :root {
+    --ratio: calc(2336 / 1080);
+    --w: min(max(100vw, 46.23dvh), 108.7vw, 74.57dvh);
+    --rsvp-size: clamp(20px, 6vw, 34px);
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--night);
+  overscroll-behavior: none;
+}
+
+body {
+  margin: 0;
+  min-height: 100svh;
+  overflow: hidden;
+  background: var(--night);
+  color: #f3e6ce;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Behind the stage: the first frame, baked small, blurred and darkened (no CSS blur: heavy in Safari). */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: url("assets/web-fill.9ceaec51d505.webp") center / cover no-repeat;
+}
+
+@media (max-aspect-ratio: 1/1) {
+  body::before {
+    background-image: url("assets/phone-fill.57973a4ec567.webp");
+  }
+}
+
+/* The fade cut opens on the dark itself: so does what is behind it. */
+body[data-cut="fade"]::before {
+  background: var(--night);
+}
+
+.stage {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: var(--w);
+  height: calc(var(--w) * var(--ratio));
+  translate: -50% -50%;
+  overflow: hidden;
+  pointer-events: none;
+  /* On a screen wider than the film, its edges melt into the fill. */
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+}
+
+@media (min-aspect-ratio: 1/1) and (max-aspect-ratio: 8/5) {
+  .stage {
+    -webkit-mask-image: linear-gradient(180deg, transparent, #000 6%, #000 94%, transparent);
+    mask-image: linear-gradient(180deg, transparent, #000 6%, #000 94%, transparent);
+  }
+}
+
+@media (max-aspect-ratio: 1/1) {
+  .stage {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+}
+
+.plate,
+.film {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* The loop waits, primed and hidden, and shows the moment its first frame is painted. */
+.film--loop {
+  opacity: 0;
+}
+
+.stage[data-looping] .film--loop {
+  opacity: 1;
+}
+
+/*
+ * The RSVP: bottom-right of the visible stage on a phone, bottom centre on a desktop (on the
+ * mist at the hotel's door). It fades in once the film has laid the details out.
+ */
+.cta {
+  --visible-w: min(var(--w), 100vw);
+  --visible-h: min(calc(var(--w) * var(--ratio)), 100dvh);
+  position: fixed;
+  right: calc((100vw - var(--visible-w)) / 2 + var(--visible-w) * 0.04);
+  bottom: calc(
+    (100dvh - var(--visible-h)) / 2 + max(var(--visible-h) * 0.03, env(safe-area-inset-bottom, 0px) + 12px)
+  );
+  z-index: 2;
+  display: flex;
+  opacity: 0;
+  visibility: hidden;
+  translate: 0 8px;
+  transition:
+    opacity 0.7s ease,
+    translate 0.7s ease,
+    visibility 0.7s;
+}
+
+.cta[data-show] {
+  opacity: 1;
+  visibility: visible;
+  translate: none;
+}
+
+@media not all and (max-aspect-ratio: 1/1) {
+  .cta {
+    right: auto;
+    left: 50%;
+    translate: -50% 8px;
+  }
+
+  .cta[data-show] {
+    translate: -50% 0;
+  }
+}
+
+/* A short phone crops the film's foot: the RSVP moves left, over the road, off the big sign. */
+@media (max-aspect-ratio: 1/1) and (min-aspect-ratio: 1/2) {
+  .cta {
+    right: auto;
+    left: calc((100vw - var(--visible-w)) / 2 + var(--visible-w) * 0.04);
+  }
+}
+
+/*
+ * The flyer's own kind of sign: a weathered board like the big HAUNTED HOTEL one (dark planks,
+ * rust-stained, in an iron frame with a thin bronze edge), its word in a heavy bracketed serif in
+ * bone, ringed with warm bulbs like 1win's board.
+ */
+.rsvp {
+  --bulb: radial-gradient(circle, #fff6df 0 0.065em, #ffc067 0.095em, #ff9d3c40 0.15em, transparent 0.19em);
+  --glow: 0 0 1.6em #ffa24a38;
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0.56em 1.45em 0.5em;
+  border: 0.09em solid #0d0806;
+  border-radius: 0.06em;
+  background:
+    radial-gradient(ellipse 80% 70% at 50% 45%, #ffa25a26, transparent 75%),
+    radial-gradient(ellipse 40% 60% at 12% 85%, #6b2a1259, transparent 70%),
+    radial-gradient(ellipse 35% 50% at 88% 20%, #5a24104d, transparent 70%),
+    repeating-linear-gradient(90deg, transparent 0 0.9em, #0000002e 0.9em 0.94em),
+    linear-gradient(180deg, #3a2b22, #251a14 60%, #1b130f);
+  box-shadow:
+    inset 0 0 0 0.05em #8a6438,
+    inset 0 0 0 0.085em #120b08,
+    inset 0 0 0.9em #000b,
+    0 0.12em 0.5em #000c,
+    var(--glow);
+  color: #efe2c6;
+  font-family: "Haunted Young Serif", Georgia, "Times New Roman", serif;
+  font-size: var(--rsvp-size);
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  text-shadow:
+    0 0.04em 0 #000,
+    0 0 0.5em #ffb46a40;
+  cursor: pointer;
+  transition:
+    box-shadow 0.2s,
+    filter 0.2s,
+    scale 0.15s ease-out;
+}
+
+/* The ring of bulbs, spaced so each edge holds whole bulbs. */
+.rsvp::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0.11em;
+  background:
+    var(--bulb) top / 0.5em 0.4em space no-repeat,
+    var(--bulb) bottom / 0.5em 0.4em space no-repeat,
+    var(--bulb) left / 0.4em 0.5em no-repeat space,
+    var(--bulb) right / 0.4em 0.5em no-repeat space;
+  filter: drop-shadow(0 0 0.08em #ffb257);
+  pointer-events: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .rsvp:hover {
+    --glow: 0 0 2.2em #ffa24a70;
+    filter: brightness(1.08);
+  }
+}
+
+.rsvp:active {
+  scale: 0.96;
+}
+
+.rsvp:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 4px;
+}
+
+/* Reduced motion: the finished invitation as a still, and every move is a cut. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
